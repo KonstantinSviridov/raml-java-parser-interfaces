@@ -1,0 +1,35 @@
+{
+  "name": "raml-parser-java-interfaces",
+  "version": "0.0.1",
+  "main": "dist/definitionSystem.js",
+  "scripts": {
+    "compile": "tsc"
+  },
+  "dependencies": {
+    "mkdirp": "^0.5.1",
+    "pluralize": "^1.2.1",
+    "raml-definition-system": "^0.0.14",
+    "ts-model": "^0.0.1",
+    "ts-structure-parser": "^0.0.5",
+    "underscore": "^1.8.3"
+  },
+  "typings": "dist/definitionSystem.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raml-org/raml-parser-java-interfaces.git"
+  },
+  "keywords": [
+    "raml",
+    "parser",
+    "java"
+  ],
+  "homepage": "https://github.com/raml-org/raml-parser-java-interfaces",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/raml-org/raml-parser-java-interfaces/issues"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.9",
+    "typings": "^0.7.9"
+  }
+}

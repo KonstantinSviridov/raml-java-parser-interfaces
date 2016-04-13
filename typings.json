@@ -1,0 +1,8 @@
+{
+  "ambientDependencies": {
+    "mkdirp": "github:DefinitelyTyped/DefinitelyTyped/mkdirp/mkdirp.d.ts#52fa2b9ce36f2c5843204e9bfbaada7cded9b47a",
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#315f5612ceb4de6f1f81f8cf49878084ea3f364a",
+    "pluralize": "file:custom_typings/pluralize.d.ts",
+    "underscore": "github:DefinitelyTyped/DefinitelyTyped/underscore/underscore.d.ts#56295f5058cac7ae458540423c50ac2dcf9fc711"
+  }
+}
