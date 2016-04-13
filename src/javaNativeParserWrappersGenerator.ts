@@ -10,7 +10,7 @@ import fs = require("fs")
 import pluralize = require("pluralize")
 import universeDef = def.universesInfo
 import tsModel = require("ts-structure-parser")
-import helperMethodExtractor = tsModel.helperMethodExtractor
+//import helperMethodExtractor = tsModel.helperMethodExtractor
 //
 //
 // var helperSources = {

@@ -1,6 +1,6 @@
 {
   "name": "raml-parser-java-interfaces",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "main": "dist/definitionSystem.js",
   "scripts": {
     "compile": "tsc"
@@ -9,7 +9,7 @@
     "mkdirp": "^0.5.1",
     "pluralize": "^1.2.1",
     "raml-definition-system": "^0.0.14",
-    "ts-model": "^0.0.1",
+    "ts-model": "^0.0.7",
     "ts-structure-parser": "^0.0.5",
     "underscore": "^1.8.3"
   },
