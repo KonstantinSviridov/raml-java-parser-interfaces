@@ -8,6 +8,7 @@ import path = require("path")
 import mkdirp = require("mkdirp")
 import fs = require("fs")
 import pluralize = require("pluralize")
+import changeCase = require("change-case")
 import universeDef = def.universesInfo
 import tsModel = require("ts-structure-parser")
 //import helperMethodExtractor = tsModel.helperMethodExtractor
@@ -47,13 +48,18 @@ class ParserGenerator{
         u.superTypes().forEach(x=>this.processType(<def.IType>x));
 
         var dcl = new td.TSEnumDecl(this.mod,typeName);
-        dcl.enumConstants = u.values;
-        var typePath = path.basename(u['_path']);
-        typePath = typePath.substring(0,typePath.lastIndexOf('.'));
-        dcl.meta['$$pkg'] = typePath;
+        dcl.enumConstants = u.values;        
+        dcl.meta['$$pkg'] = this.getPackage(u);
 
         u.subTypes().forEach(x=>this.processType(<def.IType>x));
     }
+
+    private getPackage(u:def.IType):string {
+        var typePath = path.basename(u['_path']);
+        typePath = typePath.substring(0, typePath.lastIndexOf('.'));
+        typePath = changeCase.dotCase(typePath);
+        return typePath;
+    };
 
     processType(u:def.IType) {
 
@@ -74,8 +80,7 @@ class ParserGenerator{
         var idcl = new td.TSInterface(this.mod, typeName);
         var dcl = new td.TSClassDecl(this.mod, typeName + "Impl");
 
-        var typePath = path.basename(u['_path']);
-        typePath = typePath.substring(0,typePath.lastIndexOf('.'));
+        var typePath = this.getPackage(u);
         idcl.meta['$$pkg'] = typePath;
         dcl.meta['$$pkg'] = typePath;
         dcl.implements.push(new td.TSSimpleTypeReference(td.Universe,idcl.name));
@@ -543,8 +548,10 @@ export interface JavaParserGenerationConfig{
     ignoreInSufficientHelpers:boolean
 
     generateRegistry:boolean
-
+    
     corePackage:string
+
+    fragmentPackage?:string
 }
 
 export function def2Parser(u:def.IType,cfg:JavaParserGenerationConfig,universe:def.Universe){
@@ -630,6 +637,9 @@ ${model.enumConstants.map(x=>'    '+x).join(',\n')}
                 if (isValueNode) {
                     imports[`import ${this.cfg.corePackage}.AttributeNode;`] = true;
                 }
+                else if(this.cfg.ramlVersion=="RAML10") {
+                    imports[`import ${this.cfg.fragmentPackage}.BasicFragmentNode;`] = true;
+                }
                 else {
                     imports[`import ${this.cfg.corePackage}.BasicNode;`] = true;
                 }
@@ -638,7 +648,8 @@ ${model.enumConstants.map(x=>'    '+x).join(',\n')}
 
         var defaultExtends = "";
         if(!model.meta["$$custom"]){
-            defaultExtends = isValueNode ? 'extends AttributeNode' : 'extends BasicNode';
+            defaultExtends = isValueNode ? 'extends AttributeNode' : (
+                this.cfg.ramlVersion=="RAML10"?'extends BasicFragmentNode':'extends BasicNode');
         }
         var extendsString = this.refsArrayToString(model.extends, "extends", defaultExtends);
 
@@ -703,13 +714,19 @@ ${methods.join('\n\n\n')}
         }
         else {
             if (model.extends.length == 0) {
-                imports[`import ${this.cfg.corePackage}.BasicNodeImpl;`] = true;
+                if(this.cfg.ramlVersion=="RAML10"){
+                    imports[`import ${this.cfg.fragmentPackage}.BasicFragmentNodeImpl;`] = true;
+                }
+                else {
+                    imports[`import ${this.cfg.corePackage}.BasicNodeImpl;`] = true;
+                }
             }
             imports['import com.mulesoft.ast.high.level.model.IHighLevelNode;'] = true;
         }
 
         var extendsString = this.refsArrayToString(model.extends, "extends",
-            isValueNode?'extends AttributeNodeImpl':'extends BasicNodeImpl');
+            isValueNode?'extends AttributeNodeImpl':(
+                this.cfg.ramlVersion=="RAML10"?'extends BasicFragmentNodeImpl':'extends BasicNodeImpl'));
 
         var implementsString = this.refsArrayToString(model.implements, "implements");
 

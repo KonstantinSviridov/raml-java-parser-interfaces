@@ -25,6 +25,11 @@ tsc
 Make sure you executed all necessary installation steps before you try to generate anything.
 The result files can be found inside the `./java` subfolder ending with `.json`.
 
+### RC2 Interfaces
+
+Generating RC2 interfaces requires `develop` branch of https://github.com/raml-org/raml-definition-system to be linked
+as `raml-definition-system` dependency.
+
 ```
 node dist/generateSpecInterfaces.js
 ```

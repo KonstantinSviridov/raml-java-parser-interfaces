@@ -16,23 +16,19 @@ import util = require("./util");
 import fsutil = require("./fsutil");
 
 var DEFAULT_DST = path.resolve(__dirname,"../java");
-var STATIC_CORE_DIR = path.resolve(__dirname,"../staticCode");
+var STATIC_CODE_DIR = path.resolve(__dirname,"../staticCode");
 var PARENT_PROJECT = "spec-model";
 
 var SPEC_PROJECT_NAME_10 = 'raml-spec-model-1.0';
 
 var SPEC_PROJECT_NAME_08 = 'raml-spec-model-0.8';
 
-var ROOT_SPEC_PACKAGE_10 = "org.raml";
+var ROOT_PACKAGE = "org.raml";
 
-var ROOT_SPEC_PACKAGE_08 = "org.raml";
-
-var CORE_PACKAGE = "org.raml.model.core";
-
-function generate( _dstWSPath:string, corePackage )
+function generate( _dstWSPath:string, rootPackage )
 {
     var parentProjectPathDst = path.resolve(_dstWSPath,PARENT_PROJECT);
-    var parentProjectPathSrc = path.resolve(STATIC_CORE_DIR,PARENT_PROJECT);
+    var parentProjectPathSrc = path.resolve(STATIC_CODE_DIR,PARENT_PROJECT);
     fsutil.copyDirSyncRecursive(parentProjectPathDst,parentProjectPathSrc);
 
     var universe10 = def.getUniverse("RAML10");
@@ -41,13 +37,14 @@ function generate( _dstWSPath:string, corePackage )
 
     var raml10SrcFolder = path.resolve(parentProjectPathDst, `${SPEC_PROJECT_NAME_10}/src/main/java`);
     var wrapperConfig10 = {
-        rootPackage: ROOT_SPEC_PACKAGE_10,
+        rootPackage: rootPackage,
         sourceFolderAbsolutePath: raml10SrcFolder,
         ramlVersion: "RAML10",
         generateImplementation:false,
         ignoreInSufficientHelpers:true,
         generateRegistry:false,
-        corePackage: corePackage
+        corePackage: rootPackage + ".model.core",
+        fragmentPackage: rootPackage + ".model.fragment"
     };
     javaNativeParserWrappersGenerator.def2Parser(apiType10, wrapperConfig10, universe10);
 
@@ -56,35 +53,36 @@ function generate( _dstWSPath:string, corePackage )
 
     var raml08SrcFolder = path.resolve(parentProjectPathDst, `${SPEC_PROJECT_NAME_08}/src/main/java`);
     var wrapperConfig08 = {
-        rootPackage: ROOT_SPEC_PACKAGE_08,
+        rootPackage: rootPackage,
         sourceFolderAbsolutePath: raml08SrcFolder,
         ramlVersion: "RAML08",
         generateImplementation:false,
         ignoreInSufficientHelpers:true,
         generateRegistry:false,
-        corePackage: corePackage
+        corePackage: rootPackage + ".model.core"
     };
     javaNativeParserWrappersGenerator.def2Parser(apiType08, wrapperConfig08, universe08);
 
-    var originalCoreSrc = path.resolve(STATIC_CORE_DIR,"corePackage");
+    var originalCodeSrc = path.resolve(STATIC_CODE_DIR,"src");
 
     var contentPatternReplacements:fsutil.PatternReplacementSet = {
         ".java$": {
             "map": {
-                "__core_package__": corePackage
+                "__root_package__": rootPackage
             }
         }
     };
     var pathMap:{[key:string]:string} = {
-        "__core_package__": corePackage.replace(/\./g, "/")
+        "__root_package__": rootPackage.replace(/\./g, "/") + "/model"
     };
     var replacementOptions = {
         contentPatternReplacements: contentPatternReplacements,
         pathReplacements: pathMap
     };
 
-    fsutil.copyDirSyncRecursive(raml10SrcFolder,originalCoreSrc, replacementOptions);
-    fsutil.copyDirSyncRecursive(raml08SrcFolder,originalCoreSrc, replacementOptions);
+    fsutil.copyDirSyncRecursive(raml10SrcFolder,originalCodeSrc, replacementOptions);
+    var regExp = new RegExp("[/\\\\]fragment[/\\\\]");
+    fsutil.copyDirSyncRecursive(raml08SrcFolder,originalCodeSrc, replacementOptions,x=>!regExp.test(x));
 }
 
 var dstWorkspacePath;
@@ -104,7 +102,7 @@ if(!dstWorkspacePath){
     dstWorkspacePath = DEFAULT_DST;
 }
 if(!rootPackage){
-    rootPackage = CORE_PACKAGE;
+    rootPackage = ROOT_PACKAGE;
 }
 
 
