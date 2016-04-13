@@ -1,6 +1,6 @@
 # RAML Definition System
 
-> This repository contains a set of interfaces that represents a declarative description of the RAML specification.
+> This repository contains generator of java interfaces for RAML parser.
 
 **IMPORTANT: This is still in development and should be considered alpha.**
 

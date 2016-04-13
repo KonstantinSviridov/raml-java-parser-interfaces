@@ -130,8 +130,37 @@ class ParserGenerator{
             if(superTypes.length>0){
                 dcl.extends.push(new td.TSSimpleTypeReference(td.Universe, superTypes[0].nameId() + "Impl"))
             }
+            var superTypeMethods:{[key:string]:def.IProperty[]} = {};
+            superTypes.forEach(t=>{
+                t.properties().forEach(p=>{
+                    var arr:def.IProperty[] = superTypeMethods[p.nameId()];
+                    if(!arr){
+                        arr = [];
+                        superTypeMethods[p.nameId()] = arr;
+                    }
+                    arr.push(p);
+                });
+                (<def.AbstractType>t).customProperties().forEach(p=>{
+                    var arr:def.IProperty[] = superTypeMethods[p.nameId()];
+                    if(!arr){
+                        arr = [];
+                        superTypeMethods[p.nameId()] = arr;
+                    }
+                    arr.push(p);
+                });
+            });
             map = {};
             u.properties().filter(x=> {
+
+                var arr = superTypeMethods[x.nameId()];
+                if(arr){
+                    for(var p1 of arr){
+                        if(p1.range().nameId()==x.range().nameId()){
+                            return false;
+                        }
+                    }
+                }
+
                 if (map[x.nameId()]) {
                     return false;
                 }
@@ -144,7 +173,20 @@ class ParserGenerator{
                 }
             });
             map = {};
+            superTypes.forEach(t=>{
+                t.properties().forEach(p=>map[p.nameId()]=true);
+                (<def.AbstractType>t).customProperties().forEach(p=>map[p.nameId()]=true);
+            });
             implementaionQueue.forEach(y=>y.properties().filter(x=> {
+
+                var arr = superTypeMethods[x.nameId()];
+                if(arr){
+                    for(var p1 of arr){
+                        if(p1.range().nameId()==x.range().nameId()){
+                            return false;
+                        }
+                    }
+                }
                     if (map[x.nameId()]) {
                         return false;
                     }

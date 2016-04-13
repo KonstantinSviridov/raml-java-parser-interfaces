@@ -4,6 +4,8 @@
 /src/**/*.js.map
 /src/**/*.d.ts
 
+/java
+
 *.iml
 
 .project
