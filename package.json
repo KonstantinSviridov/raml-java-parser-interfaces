@@ -1,6 +1,6 @@
 {
   "name": "raml-parser-java-interfaces",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "main": "dist/definitionSystem.js",
   "scripts": {
     "compile": "tsc"

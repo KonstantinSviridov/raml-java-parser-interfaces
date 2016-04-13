@@ -38,7 +38,7 @@ class ParserGenerator{
 
     processed:{[name:string]:def.IType}={};
 
-    private helperMethods:{[key:string]:helperMethodExtractor.HelperMethod[]}={};
+    //private helperMethods:{[key:string]:helperMethodExtractor.HelperMethod[]}={};
 
     //private helperSources:any;
 
@@ -223,7 +223,7 @@ class ParserGenerator{
     private addHelperMethods(u:def.IType,decl:td.TSInterface,isImpl:boolean=false){
 
         //this.initHelpers(u);
-        var methods = this.helperMethods[u.nameId()];
+        var methods;// = this.helperMethods[u.nameId()];
         if(!methods){
             return;
         }
@@ -1026,6 +1026,11 @@ function initReturnTypesMap(){
     arrMap[def.universesInfo.Universe10.ArrayTypeDeclaration.properties.minItems.name] = "Integer";
     arrMap[def.universesInfo.Universe10.ArrayTypeDeclaration.properties.maxItems.name] = "Integer";
     returnTypesMap[def.universesInfo.Universe10.ArrayTypeDeclaration.name] = arrMap;
+
+    var fileMap = {};
+    fileMap[def.universesInfo.Universe10.FileTypeDeclaration.properties.minLength.name] = "Long";
+    fileMap[def.universesInfo.Universe10.FileTypeDeclaration.properties.maxLength.name] = "Long";
+    returnTypesMap[def.universesInfo.Universe10.FileTypeDeclaration.name] = fileMap;
 }
 
 function mapReturnType(method:td.TSAPIElementDeclaration):string{
