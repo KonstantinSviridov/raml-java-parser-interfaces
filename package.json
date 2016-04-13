@@ -3,7 +3,12 @@
   "version": "0.0.8",
   "main": "dist/definitionSystem.js",
   "scripts": {
-    "compile": "tsc"
+    "compile" : "rimraf dist && tsc",
+    "build" : "npm run compile",
+    "pullall" : "dev-env-installer pullall",
+    "buildall" : "dev-env-installer buildall",
+    "testall" : "dev-env-installer testall",
+    "devInstall": "dev-env-installer install"
   },
   "dependencies": {
     "change-case": "^2.3.1",
@@ -30,7 +35,9 @@
     "url": "https://github.com/raml-org/raml-parser-java-interfaces/issues"
   },
   "devDependencies": {
+    "dev-env-installer":"^0.0.2",
     "typescript": "^1.8.9",
-    "typings": "^0.7.9"
+    "typings": "^0.7.9",
+    "rimraf":"*"
   }
 }
