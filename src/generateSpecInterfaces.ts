@@ -27,9 +27,21 @@ var ROOT_PACKAGE = "org.raml";
 
 function generate( _dstWSPath:string, rootPackage )
 {
+
+    var defSysVer = definitionSystemVersion();
+    var timestamp = new Date().toISOString();
+
+    var options:fsutil.CopyOptions = {
+        forceDelete: true,
+        contentReplacements: {
+            "__TIMESTAMP__": timestamp,
+            "__DEFINITION_SYSTEM_VERSION__": defSysVer
+        }
+    };
+
     var parentProjectPathDst = path.resolve(_dstWSPath,PARENT_PROJECT);
     var parentProjectPathSrc = path.resolve(STATIC_CODE_DIR,PARENT_PROJECT);
-    fsutil.copyDirSyncRecursive(parentProjectPathDst,parentProjectPathSrc);
+    fsutil.copyDirSyncRecursive(parentProjectPathDst,parentProjectPathSrc,options);
 
     var universe10 = def.getUniverse("RAML10");
     var apiType10= universe10.type(universeDef.Universe10.Api.name);
@@ -65,19 +77,18 @@ function generate( _dstWSPath:string, rootPackage )
 
     var originalCodeSrc = path.resolve(STATIC_CODE_DIR,"src");
 
-    var contentPatternReplacements:fsutil.PatternReplacementSet = {
-        ".java$": {
-            "map": {
-                "__root_package__": rootPackage
+    var replacementOptions:fsutil.CopyOptions = {
+        forceDelete: true,
+        contentPatternReplacements: {
+            ".java$": {
+                "map": {
+                    "__root_package__": rootPackage
+                }
             }
+        },
+        pathReplacements: {
+            "__root_package__": rootPackage.replace(/\./g, "/") + "/model"
         }
-    };
-    var pathMap:{[key:string]:string} = {
-        "__root_package__": rootPackage.replace(/\./g, "/") + "/model"
-    };
-    var replacementOptions = {
-        contentPatternReplacements: contentPatternReplacements,
-        pathReplacements: pathMap
     };
 
     fsutil.copyDirSyncRecursive(raml10SrcFolder,originalCodeSrc, replacementOptions);
@@ -107,3 +118,13 @@ if(!rootPackage){
 
 
 generate( dstWorkspacePath, rootPackage );
+
+function definitionSystemVersion():string{
+    try {
+        var defSystemPackageJson:any = require("../node_modules/raml-definition-system/package.json");
+        return defSystemPackageJson.version;
+    }
+    catch(e){
+        return "unknown";
+    }
+}

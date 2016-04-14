@@ -137,7 +137,7 @@ class ParserGenerator{
             }
             var superTypeMethods:{[key:string]:def.IProperty[]} = {};
             superTypes.forEach(t=>{
-                t.properties().forEach(p=>{
+                t.allProperties().forEach(p=>{
                     var arr:def.IProperty[] = superTypeMethods[p.nameId()];
                     if(!arr){
                         arr = [];
@@ -145,7 +145,7 @@ class ParserGenerator{
                     }
                     arr.push(p);
                 });
-                (<def.AbstractType>t).customProperties().forEach(p=>{
+                (<def.AbstractType>t).allCustomProperties().forEach(p=>{
                     var arr:def.IProperty[] = superTypeMethods[p.nameId()];
                     if(!arr){
                         arr = [];

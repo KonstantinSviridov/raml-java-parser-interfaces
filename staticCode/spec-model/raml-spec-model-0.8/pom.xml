@@ -5,6 +5,8 @@
     <artifactId>raml-spec-model-0.8</artifactId>
     <version>0.1.1-SNAPSHOT</version>
 
+    <description>Defenition system version: __DEFINITION_SYSTEM_VERSION__. Generated __TIMESTAMP__.</description>
+
     <build>
         <resources>
             <resource>
