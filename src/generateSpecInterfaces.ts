@@ -48,6 +48,8 @@ function generate( _dstWSPath:string, rootPackage )
 
 
     var raml10SrcFolder = path.resolve(parentProjectPathDst, `${SPEC_PROJECT_NAME_10}/src/main/java`);
+    var corePackage10 = rootPackage + ".model" + javaNativeParserWrappersGenerator.versionPackageSegment("RAML10") + ".core";
+    var fragmentPackage10 = rootPackage + ".model" + javaNativeParserWrappersGenerator.versionPackageSegment("RAML10") +".fragment";
     var wrapperConfig10 = {
         rootPackage: rootPackage,
         sourceFolderAbsolutePath: raml10SrcFolder,
@@ -55,8 +57,8 @@ function generate( _dstWSPath:string, rootPackage )
         generateImplementation:false,
         ignoreInSufficientHelpers:true,
         generateRegistry:false,
-        corePackage: rootPackage + ".model.core",
-        fragmentPackage: rootPackage + ".model.fragment"
+        corePackage: corePackage10,
+        fragmentPackage: fragmentPackage10
     };
     javaNativeParserWrappersGenerator.def2Parser(apiType10, wrapperConfig10, universe10);
 
@@ -64,6 +66,7 @@ function generate( _dstWSPath:string, rootPackage )
     var apiType08= universe08.type(universeDef.Universe08.Api.name);
 
     var raml08SrcFolder = path.resolve(parentProjectPathDst, `${SPEC_PROJECT_NAME_08}/src/main/java`);
+    var corePackage08 = rootPackage + ".model" + javaNativeParserWrappersGenerator.versionPackageSegment("RAML08") +".core";
     var wrapperConfig08 = {
         rootPackage: rootPackage,
         sourceFolderAbsolutePath: raml08SrcFolder,
@@ -71,29 +74,45 @@ function generate( _dstWSPath:string, rootPackage )
         generateImplementation:false,
         ignoreInSufficientHelpers:true,
         generateRegistry:false,
-        corePackage: rootPackage + ".model.core"
+        corePackage: corePackage08
     };
     javaNativeParserWrappersGenerator.def2Parser(apiType08, wrapperConfig08, universe08);
 
     var originalCodeSrc = path.resolve(STATIC_CODE_DIR,"src");
 
-    var replacementOptions:fsutil.CopyOptions = {
+    var replacementOptions10:fsutil.CopyOptions = {
         forceDelete: true,
         contentPatternReplacements: {
             ".java$": {
                 "map": {
-                    "__root_package__": rootPackage
+                    "__core_package__": corePackage10,
+                    "__fragment_package__": fragmentPackage10
                 }
             }
         },
         pathReplacements: {
-            "__root_package__": rootPackage.replace(/\./g, "/") + "/model"
+            "__core_package__": corePackage10.replace(/\./g, "/"),
+            "__fragment_package__": fragmentPackage10.replace(/\./g, "/")
         }
     };
 
-    fsutil.copyDirSyncRecursive(raml10SrcFolder,originalCodeSrc, replacementOptions);
-    var regExp = new RegExp("[/\\\\]fragment[/\\\\]");
-    fsutil.copyDirSyncRecursive(raml08SrcFolder,originalCodeSrc, replacementOptions,x=>!regExp.test(x));
+    fsutil.copyDirSyncRecursive(raml10SrcFolder,originalCodeSrc, replacementOptions10);
+
+    var replacementOptions08:fsutil.CopyOptions = {
+        forceDelete: true,
+        contentPatternReplacements: {
+            ".java$": {
+                "map": {
+                    "__core_package__": corePackage08
+                }
+            }
+        },
+        pathReplacements: {
+            "__core_package__": corePackage08.replace(/\./g, "/")
+        }
+    };
+    var regExp = new RegExp("[/\\\\]__fragment_package__[/\\\\]");
+    fsutil.copyDirSyncRecursive(raml08SrcFolder,originalCodeSrc, replacementOptions08,x=>!regExp.test(x));
 }
 
 var dstWorkspacePath;

@@ -1,4 +1,4 @@
-package __root_package__.model.fragment;
+package __fragment_package__;
 
 import java.util.List;
 

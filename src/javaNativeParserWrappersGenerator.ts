@@ -223,6 +223,78 @@ class ParserGenerator{
             idcl.meta["$$custom"] = true;
             this.mod.removeChild(dcl);
         }
+        this.generatePrimitivesAnnotations(u,idcl,dcl);
+    }
+
+    private generatePrimitivesAnnotations(u:def.IType,interfaceModel:td.TSClassDecl,classModel:td.TSClassDecl){
+
+        // if((<def.NodeClass>u).isCustom()){
+        //     return;
+        // }
+
+        if(u.universe().version()!="RAML10") {
+            return;
+        }
+
+        if(u.isValueType()){
+            return;
+        }
+
+        if(u.isAssignableFrom('TypeInstance')){
+            return;
+        }
+
+        if(u.isAssignableFrom('TypeInstanceProperty')){
+            return;
+        }
+
+        var ownPropsMap = {};
+        for(var ch of interfaceModel.children()){
+            if(!(ch instanceof td.TSAPIElementDeclaration)){
+                continue;
+            }
+            ownPropsMap[(<td.TSAPIElementDeclaration>ch).name]=true;
+        }
+
+        var scalarProperties = u.properties()
+            .concat((<def.AbstractType>u).customProperties())
+            .filter(x=>x.range().isValueType()&&ownPropsMap[x.nameId()]
+            &&!(<def.Property>x).isFromParentKey());
+
+        if(scalarProperties.length==0){
+            return;
+        }
+        var typeName = u.nameId();
+
+        var iName = typeName + "ScalarsAnnotations";
+        var idcl = new td.TSInterface(this.mod, iName);
+        idcl.meta['$$pkg'] = interfaceModel.meta['$$pkg'];
+        idcl.meta["$$custom"] = true;
+        var typeComment = typeName + " scalar properties annotations accessor";
+        idcl._comment = typeComment;
+
+        var superTypes = u.superTypes();
+        while(superTypes.length>0){
+            var superType = superTypes[0];
+            if(superType.properties()
+                    .concat((<def.AbstractType>superType).customProperties())
+                            .filter(x=>x.range().isValueType()).length>0){
+                var superTypeName = superType.nameId();
+                var superInterfaceName = superTypeName+ "ScalarsAnnotations";
+                idcl.extends.push(new td.TSSimpleTypeReference(td.Universe, superInterfaceName));
+                break;
+            }
+            superTypes = superType.superTypes();
+        }
+        for(var prop of scalarProperties){
+            var propName = prop.nameId();
+            var dim = prop.isMultiValue()||prop.range().isArray() ? 2:1;
+            var methodComment = typeName+"."+propName+ " annotations";
+            this.addInterfaceMethod(idcl,propName,"AnnotationRef",methodComment,dim);
+        }
+
+        this.addInterfaceMethod(interfaceModel,"scalarsAnnotations"
+            ,iName,"Scalar properties annotations accessor");
     }
 
     private addHelperMethods(u:def.IType,decl:td.TSInterface,isImpl:boolean=false){
@@ -277,13 +349,21 @@ class ParserGenerator{
         idcl:td.TSInterface,
         methodName:string,
         returnTypeName:string,
-        comment?:string):td.TSAPIElementDeclaration {
+        comment?:string,
+        arrayDim:number=0):td.TSAPIElementDeclaration {
 
         var existing = this.getExistingMethods(idcl, methodName);
         existing.forEach(x=>idcl.removeChild(x));
         var method = new td.TSAPIElementDeclaration(idcl, methodName);
         method.isFunc = true;
-        method.rangeType = new td.TSSimpleTypeReference(method, returnTypeName);
+        var ref:td.TSTypeReference<any> = new td.TSSimpleTypeReference(method, returnTypeName);
+        while(arrayDim>0){
+            var aRef = new td.TSArrayReference();
+            aRef.componentType = ref;
+            ref = aRef;
+            arrayDim--;
+        }
+        method.rangeType = ref;
         if(comment && comment.trim().length>0) {
             method._comment = comment;
         }
@@ -571,6 +651,16 @@ class ImplementationGenerator {
     }
 }
 
+export var versionPackageSegment = function (ramlVersion:string) {
+    var verSegm = "";
+    if (ramlVersion == "RAML10") {
+        verSegm = ".v10";
+    }
+    else if (ramlVersion == "RAML08") {
+        verSegm = ".v08";
+    }
+    return verSegm;
+};
 class Serializer{
 
     constructor(protected module:td.TSAPIModule, protected cfg:JavaParserGenerationConfig){}
@@ -578,15 +668,16 @@ class Serializer{
     private pkgMap:{[key:string]:string} = {}
 
     serializeAll(){
+        var verSegm = versionPackageSegment(this.cfg.ramlVersion);
         this.module.children().forEach(x=> {
 
             if (x instanceof td.TSClassDecl){
                 if(this.cfg.generateImplementation){
-                    this.pkgMap[x.name] = this.cfg.rootPackage + '.impl.' + x.meta['$$pkg'];
+                    this.pkgMap[x.name] = this.cfg.rootPackage + '.impl' + verSegm + "." + x.meta['$$pkg'];
                 }
             }
             else{
-                this.pkgMap[x.name] = this.cfg.rootPackage + '.model.' + x.meta['$$pkg'];
+                this.pkgMap[x.name] = this.cfg.rootPackage + '.model' + verSegm + "." + x.meta['$$pkg'];
             }
         });
         this.serializeModelFactory();
@@ -939,6 +1030,9 @@ ${Object.keys(this.pkgMap).map(x=>`            ${this.pkgMap[x]}.${x}.class`).jo
 
 
 function getReturnTypeString(rangeType:td.TSTypeReference<any>):string{
+    if(rangeType.array()){
+        return `List<${getReturnTypeString((<td.TSArrayReference>rangeType).componentType)}>`
+    }
     var returnType = resolveArray(rangeType);
     return rangeType.array() ? `List<${returnType}>` : returnType;
 }
@@ -949,10 +1043,10 @@ function paramString(param:td.Param):string{
 }
 
 function resolveArray(rangeType:td.TSTypeReference<any>,toImpl:boolean=false):string{
-    var isArray = rangeType.array();
-    rangeType = isArray
-        ? (<td.TSArrayReference>rangeType).componentType
-        : rangeType ;
+    while(rangeType.array()){
+        rangeType = (<td.TSArrayReference>rangeType).componentType;
+    }
+
 
     var returnType = rangeType.serializeToString();
     var converted = tsutil.tsToJavaTypeMap[returnType];

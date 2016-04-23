@@ -1,4 +1,4 @@
-package __root_package__.model.core;
+package __core_package__;
 
 public interface ValueMetadata {
 

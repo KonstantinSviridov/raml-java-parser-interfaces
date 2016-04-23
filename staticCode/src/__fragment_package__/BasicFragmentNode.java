@@ -1,6 +1,6 @@
-package __root_package__.model.fragment;
+package __fragment_package__;
 
-import __root_package__.model.core.BasicNode;
+import __core_package__.BasicNode;
 
 public interface BasicFragmentNode extends BasicNode {
 	
